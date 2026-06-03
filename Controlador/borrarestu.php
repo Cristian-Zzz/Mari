@@ -1,0 +1,55 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__ . '/../Modelo/conex.php';
+
+// Normalizar conexión
+if (isset($conexion) && $conexion instanceof mysqli) {
+    $db = $conexion;
+} elseif (isset($conn) && $conn instanceof mysqli) {
+    $db = $conn;
+} elseif (isset($mysqli) && $mysqli instanceof mysqli) {
+    $db = $mysqli;
+} else {
+    die("Error: No hay conexión válida a la base de datos.");
+}
+
+// Validar ID recibido
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Error: ID de estudiante no válido.");
+}
+
+$idDatosEstudiante = intval($_GET['id']);
+
+// Eliminar con prepared statement
+$stmt = $db->prepare("DELETE FROM datosestudiante WHERE IdDatosEstudiante = ?");
+
+if (!$stmt) {
+    die("Error al preparar consulta: " . $db->error);
+}
+
+$stmt->bind_param("i", $idDatosEstudiante);
+
+if ($stmt->execute()) {
+    if ($stmt->affected_rows > 0) {
+        echo "<script>
+            alert('Datos del estudiante eliminados correctamente');
+            window.location.href='../Vista/App/Admon/DatosEstudiantes.php';
+        </script>";
+    } else {
+        echo "<script>
+            alert('No se encontró el registro a eliminar');
+            window.location.href='../Vista/App/Admon/DatosEstudiantes.php';
+        </script>";
+    }
+} else {
+    echo "<script>
+        alert('Error al eliminar los datos: " . $stmt->error . "');
+        window.location.href='../Vista/App/Admon/DatosEstudiantes.php';
+    </script>";
+}
+
+$stmt->close();
+$db->close();
+?>
